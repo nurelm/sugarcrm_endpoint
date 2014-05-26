@@ -53,8 +53,26 @@ class Sugarcrm
       raise SugarcrmAddCustomerError, response + "\n" + e.message, caller
     end
   end
+  
+  def update_customer
+    customer = Customer.new(@payload['customer'])
+    response = ""
+    begin
+      ## Update Account
+      response = @request.put BASE_API_URI + "/Accounts/" + customer.id,
+                              params: customer.sugar_account
+      ## Update Contact
+      response = @request.put BASE_API_URI + "/Contacts/" + customer.id,
+                              params: customer.sugar_contact
+
+      "Successfully updated customer"
+    rescue => e
+      raise SugarcrmUpdateCustomerError, response + "\n" + e.message, caller
+    end
+  end
 
 end
 
 class AuthenticationError < StandardError; end
 class SugarcrmAddCustomerError < StandardError; end
+class SugarcrmUpdateCustomerError < StandardError; end
