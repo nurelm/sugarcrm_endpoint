@@ -38,10 +38,8 @@ class Sugarcrm
     customer = Customer.new(@payload['customer'])
     begin
       ## Create identical Account and Contact in Sugar
-      @request.post BASE_API_URI + '/Accounts',
-                               params: customer.sugar_account
-      @request.post BASE_API_URI + '/Contacts',
-                               params: customer.sugar_contact
+      @request.post BASE_API_URI + '/Accounts', params: customer.sugar_account
+      @request.post BASE_API_URI + '/Contacts', params: customer.sugar_contact
   
       ## Associate Sugar Account and Contact
       response = @request.post BASE_API_URI +
@@ -50,7 +48,7 @@ class Sugarcrm
       "Customer #{customer.id} was added."
     rescue => e
       message = "Unable to add customer #{customer.id}: \n" + e.message
-      raise SugarcrmAddCustomerError, message, caller
+      raise SugarcrmAddObjectError, message, caller
     end
   end
   
@@ -59,20 +57,52 @@ class Sugarcrm
     begin
       ## Update Account
       @request.put BASE_API_URI + "/Accounts/" + customer.id,
-                              params: customer.sugar_account
+                   params: customer.sugar_account
+
       ## Update Contact
       @request.put BASE_API_URI + "/Contacts/" + customer.id,
-                              params: customer.sugar_contact
+                   params: customer.sugar_contact
 
       "Customer #{customer.id} was updated."
     rescue => e
       message = "Unable to update customer #{customer.id}: \n" + e.message
-      raise SugarcrmUpdateCustomerError, message, caller
+      raise SugarcrmUpdateObjectError, message, caller
     end
   end
 
+  def add_order
+    order = Order.new(@payload['order']) 
+    begin
+      ## Create matching Opportunity in SugarCRM
+      @request.post BASE_API_URI + '/Opportunities', params: order.sugar_opportunity
+  
+      ## Would be nice to associate with an Account, but how?
+
+      "Order #{order.id} was added."
+    rescue => e
+      message = "Unable to add order #{order.id}: \n" + e.message
+      raise SugarcrmAddObjectError, message, caller
+    end
+  end
+  
+  def update_order
+    order = Order.new(@payload['order'])
+    begin
+      ## Create matching Opportunity in SugarCRM
+      @request.put BASE_API_URI + '/Opportunities/' + order.id,
+                   params: order.sugar_opportunity
+  
+      ## Would be nice to associate with an Account, but how?
+
+      "Order #{order.id} was updated."
+    rescue => e
+      message = "Unable to update order #{order.id}: \n" + e.message
+      raise SugarcrmUpdateObjectError, message, caller
+    end
+  end
+  
 end
 
 class AuthenticationError < StandardError; end
-class SugarcrmAddCustomerError < StandardError; end
-class SugarcrmUpdateCustomerError < StandardError; end
+class SugarcrmAddObjectError < StandardError; end
+class SugarcrmUpdateObjectError < StandardError; end
