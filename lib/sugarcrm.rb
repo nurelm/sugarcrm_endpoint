@@ -36,38 +36,38 @@ class Sugarcrm
 
   def add_customer
     customer = Customer.new(@payload['customer'])
-    response = ""
     begin
       ## Create identical Account and Contact in Sugar
-      response = @request.post BASE_API_URI + '/Accounts',
+      @request.post BASE_API_URI + '/Accounts',
                                params: customer.sugar_account
-      response = @request.post BASE_API_URI + '/Contacts',
+      @request.post BASE_API_URI + '/Contacts',
                                params: customer.sugar_contact
   
       ## Associate Sugar Account and Contact
       response = @request.post BASE_API_URI +
                                "/Contacts/" + customer.id + "/link/accounts/" + customer.id
 
-      "Successfully sent customer to SugarCRM"
+      "Customer #{customer.id} was added."
     rescue => e
-      raise SugarcrmAddCustomerError, response + "\n" + e.message, caller
+      message = "Unable to add customer #{customer.id}: \n" + e.message
+      raise SugarcrmAddCustomerError, message, caller
     end
   end
   
   def update_customer
     customer = Customer.new(@payload['customer'])
-    response = ""
     begin
       ## Update Account
-      response = @request.put BASE_API_URI + "/Accounts/" + customer.id,
+      @request.put BASE_API_URI + "/Accounts/" + customer.id,
                               params: customer.sugar_account
       ## Update Contact
-      response = @request.put BASE_API_URI + "/Contacts/" + customer.id,
+      @request.put BASE_API_URI + "/Contacts/" + customer.id,
                               params: customer.sugar_contact
 
-      "Successfully updated customer"
+      "Customer #{customer.id} was updated."
     rescue => e
-      raise SugarcrmUpdateCustomerError, response + "\n" + e.message, caller
+      message = "Unable to update customer #{customer.id}: \n" + e.message
+      raise SugarcrmUpdateCustomerError, message, caller
     end
   end
 

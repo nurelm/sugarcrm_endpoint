@@ -28,6 +28,7 @@ class Customer
     account['billing_address_country'] = @spree_customer['billing_address']['country']
     account['phone_office'] = @spree_customer['billing_address']['phone']
     account['phone_alternate'] = @spree_customer['shipping_address']['phone']
+    account['lead_source'] = 'ecomm'
     return account
   end
   
@@ -53,6 +54,7 @@ class Customer
     contact['phone_home'] = @spree_customer['billing_address']['phone']
     contact['phone_work'] = @spree_customer['billing_address']['phone']
     contact['phone_other'] = @spree_customer['shipping_address']['phone']
+    contact['lead_source'] = 'ecomm'
     return contact
   end
 
