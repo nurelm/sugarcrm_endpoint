@@ -60,6 +60,7 @@ class Sugarcrm
       ## Update Account
       @request.put BASE_API_URI + "/Accounts/" + customer.id,
                               params: customer.sugar_account
+
       ## Update Contact
       @request.put BASE_API_URI + "/Contacts/" + customer.id,
                               params: customer.sugar_contact
