@@ -71,7 +71,7 @@ class Sugarcrm
   end
 
   def add_order
-    order = Order.new(@payload['order'])
+    order = Order.new(@payload['order']) 
     begin
       ## Create matching Opportunity in SugarCRM
       @request.post BASE_API_URI + '/Opportunities', params: order.sugar_opportunity
