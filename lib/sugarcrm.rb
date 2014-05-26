@@ -38,10 +38,8 @@ class Sugarcrm
     customer = Customer.new(@payload['customer'])
     begin
       ## Create identical Account and Contact in Sugar
-      @request.post BASE_API_URI + '/Accounts',
-                               params: customer.sugar_account
-      @request.post BASE_API_URI + '/Contacts',
-                               params: customer.sugar_contact
+      @request.post BASE_API_URI + '/Accounts', params: customer.sugar_account
+      @request.post BASE_API_URI + '/Contacts', params: customer.sugar_contact
   
       ## Associate Sugar Account and Contact
       response = @request.post BASE_API_URI +
@@ -59,11 +57,11 @@ class Sugarcrm
     begin
       ## Update Account
       @request.put BASE_API_URI + "/Accounts/" + customer.id,
-                              params: customer.sugar_account
+                   params: customer.sugar_account
 
       ## Update Contact
       @request.put BASE_API_URI + "/Contacts/" + customer.id,
-                              params: customer.sugar_contact
+                   params: customer.sugar_contact
 
       "Customer #{customer.id} was updated."
     rescue => e
@@ -76,8 +74,7 @@ class Sugarcrm
     order = Order.new(@payload['order'])
     begin
       ## Create matching Opportunity in SugarCRM
-      @request.post BASE_API_URI + '/Opportunities',
-                               params: order.sugar_opportunity
+      @request.post BASE_API_URI + '/Opportunities', params: order.sugar_opportunity
   
       ## Would be nice to associate with an Account, but how?
 
@@ -93,7 +90,7 @@ class Sugarcrm
     begin
       ## Create matching Opportunity in SugarCRM
       @request.put BASE_API_URI + '/Opportunities',
-                               params: order.sugar_opportunity
+                   params: order.sugar_opportunity
   
       ## Would be nice to associate with an Account, but how?
 
