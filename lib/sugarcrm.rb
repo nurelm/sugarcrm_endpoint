@@ -87,15 +87,41 @@ class Sugarcrm
   def update_order
     order = Order.new(@payload['order'])
     begin
-      ## Create matching Opportunity in SugarCRM
       @request.put BASE_API_URI + '/Opportunities/' + order.id,
                    params: order.sugar_opportunity
   
-      ## Would be nice to associate with an Account, but how?
-
       "Order #{order.id} was updated."
     rescue => e
       message = "Unable to update order #{order.id}: \n" + e.message
+      raise SugarcrmUpdateObjectError, message, caller
+    end
+  end
+  
+  def add_product
+    product = Product.new(@payload['product']) 
+    begin
+      ## Create matching ProductTemplate in SugarCRM
+      @request.post BASE_API_URI + '/ProductTemplates',
+                    params: product.sugar_product_template
+  
+      ## Would be nice to associate with an Account, but how?
+
+      "Product #{product.id} was added."
+    rescue => e
+      message = "Unable to add product #{product.id}: \n" + e.message
+      raise SugarcrmAddObjectError, message, caller
+    end
+  end
+  
+  def update_product
+    product = Product.new(@payload['product'])
+    begin
+      @request.put BASE_API_URI + '/ProductTemplates/' + product.id,
+                   params: product.sugar_product_template
+  
+      "Product #{product.id} was updated."
+    rescue => e
+      message = "Unable to update product #{product.id}: \n" + e.message
       raise SugarcrmUpdateObjectError, message, caller
     end
   end
