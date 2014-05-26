@@ -30,9 +30,11 @@ class SugarcrmEndpoint < EndpointBase::Sinatra::Base
   end
 
   post '/add_product' do
+    sugar_action('add_product')
   end
 
   put '/update_product' do
+    sugar_action('update_product')
   end
 
   get '/get_product' do
