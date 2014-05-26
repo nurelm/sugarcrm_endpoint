@@ -1,32 +1,33 @@
 require 'oauth2'
+require 'json'
 
 class Sugarcrm
-  @client_id = "sugar"
-  @client_secret = ""
-  @client_url = 'https://nssegc3123.trial.sugarcrm.com'
-  @base_api_uri = '/rest/v10'
+  CLIENT_ID = "sugar"
+  CLIENT_SECRET = ""
+  CLIENT_URL = "https://wycpng2607.trial.sugarcrm.com"
+  BASE_API_URI = "/rest/v10"
 
   attr_accessor :order, :config, :payload, :request
 
   def initialize(payload, config={})
     @payload = payload
     @config = config
-
     authenticate!
   end
 
   def authenticate!
     raise AuthenticationError if
         @config['sugarcrm_username'].nil? || @config['sugarcrm_password'].nil?
-    client = OAuth2::Client.new @client_id, @client_secret,
-                                :token_url => @base_api_uri + '/oauth2/token',
-                                :site => @client_url
-    token_request = client.password.get_token(username, password)
+    client = OAuth2::Client.new CLIENT_ID, CLIENT_SECRET,
+                                :token_url => BASE_API_URI + '/oauth2/token',
+                                :site => CLIENT_URL
+    token_request = client.password.get_token(
+      @config['sugarcrm_username'], @config['sugarcrm_password'])
     token_string = token_request.token
     @request = OAuth2::AccessToken.new client,
-                                      token_string,
-                                      :header_format => "%s",
-                                      :header_auth_field => "OAuth-Token"
+                                       token_string,
+                                       :header_format => "%s",
+                                       :header_auth_field => "OAuth-Token"
   end
 
   def server_mode
@@ -35,19 +36,29 @@ class Sugarcrm
   end
 
   def add_customer
-    ## Check if account exists in sugar first
-    @request.post @base_api_uri + 'Accounts', @payload['account']
+    customer = Customer.new(@payload['customer'])
+    response = ""
+    begin
+      ## Create similar Account and Contact in Sugar
+      response = @request.post BASE_API_URI + '/Accounts',
+                               params: customer.sugar_account
+      response = @request.post BASE_API_URI + '/Contacts',
+                               params: customer.sugar_contact
+  
+      ## Associate Sugar Account and Contact
+      #link_hash = JSON.parse('{ "link_name": "contacts", "ids": ["' + customer.id + '"] }')
+      #response = @request.post BASE_API_URI + "/Accounts/" + customer.id + "/link",
+                               link_hash
 
-    ## Check if contact exists in sugar first
-    @request.post @base_api_uri + 'Contacts', @payload['contact']
-
-    ## Associate customer w account
-    link_hash = JSON.parse('{ "link_name": "contacts", "ids": ["demo_bob_burger"] }')
-    @request.post @base_api_uri + 'Accounts/#{id}/link', link_hash
+      "Successfully sent customer to SugarCRM"
+    rescue => e
+      raise SugarcrmAddCustomerError, response + "\n" + e.message, caller
+    end
   end
 
 end
 
 class AuthenticationError < StandardError; end
+class SugarcrmAddCustomerError < StandardError; end
 class SugarcrmSubmitOrderError < StandardError; end
 class SendError < StandardError; end

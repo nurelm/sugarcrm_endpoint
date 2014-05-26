@@ -6,14 +6,15 @@ Dir['./lib/**/*.rb'].each { |f| require f }
 
 class SugarcrmEndpoint < EndpointBase::Sinatra::Base
   set :logging, true
-
+  
   post '/add_customer' do
     begin
-  	  sugarcrm = Sugarcrm.new(@payload, @config)
-  	  response  = sugarcrm.add_customer
-
+      sugarcrm = Sugarcrm.new(@payload, @config)
+      response  = sugarcrm.add_customer
       result 200, 'Successfully sent customer to SugarCRM'
     rescue => e
+      print e.cause
+      print e.backtrace.join("\n")
       result 500, e.message
     end
   end
