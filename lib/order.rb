@@ -1,3 +1,5 @@
+require 'date'
+
 class Order
 
   def initialize(spree_order = {})
@@ -15,7 +17,7 @@ class Order
     opportunity['name'] = "Spree Hub ID #{@spree_order['id']}"
     opportunity['description'] = @spree_order.to_s
     opportunity['lead_source'] = 'ecomm'
-    opportunity['date_closed'] = @spree_order['placed_on']
+    opportunity['date_closed'] = DateTime.parse(@spree_order['placed_on']).to_date.to_s
     opportunity['amount'] = @spree_order['totals']['order']
     if @spree_order['currency'] == 'USD'
       opportunity['amount_usdollar'] = @spree_order['totals']['order']
