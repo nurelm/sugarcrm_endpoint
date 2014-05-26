@@ -89,7 +89,7 @@ class Sugarcrm
     order = Order.new(@payload['order'])
     begin
       ## Create matching Opportunity in SugarCRM
-      @request.put BASE_API_URI + '/Opportunities',
+      @request.put BASE_API_URI + '/Opportunities/' + order.id,
                    params: order.sugar_opportunity
   
       ## Would be nice to associate with an Account, but how?
