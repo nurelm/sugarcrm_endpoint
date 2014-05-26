@@ -1,5 +1,4 @@
 require 'oauth2'
-require 'json'
 
 class Sugarcrm
   CLIENT_ID = "sugar"
@@ -39,16 +38,15 @@ class Sugarcrm
     customer = Customer.new(@payload['customer'])
     response = ""
     begin
-      ## Create similar Account and Contact in Sugar
+      ## Create identical Account and Contact in Sugar
       response = @request.post BASE_API_URI + '/Accounts',
                                params: customer.sugar_account
       response = @request.post BASE_API_URI + '/Contacts',
                                params: customer.sugar_contact
   
       ## Associate Sugar Account and Contact
-      #link_hash = JSON.parse('{ "link_name": "contacts", "ids": ["' + customer.id + '"] }')
-      #response = @request.post BASE_API_URI + "/Accounts/" + customer.id + "/link",
-                               link_hash
+      response = @request.post BASE_API_URI +
+                               "/Contacts/" + customer.id + "/link/accounts/" + customer.id
 
       "Successfully sent customer to SugarCRM"
     rescue => e
@@ -60,5 +58,3 @@ end
 
 class AuthenticationError < StandardError; end
 class SugarcrmAddCustomerError < StandardError; end
-class SugarcrmSubmitOrderError < StandardError; end
-class SendError < StandardError; end
