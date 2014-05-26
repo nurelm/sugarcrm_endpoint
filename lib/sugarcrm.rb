@@ -48,7 +48,7 @@ class Sugarcrm
       response = @request.post BASE_API_URI +
                                "/Contacts/" + customer.id + "/link/accounts/" + customer.id
 
-      "Successfully sent customer to SugarCRM"
+      "Customer #{customer.id} was added."
     rescue => e
       raise SugarcrmAddCustomerError, response + "\n" + e.message, caller
     end
@@ -56,18 +56,17 @@ class Sugarcrm
   
   def update_customer
     customer = Customer.new(@payload['customer'])
-    response = ""
     begin
       ## Update Account
-      response = @request.put BASE_API_URI + "/Accounts/" + customer.id,
+      @request.put BASE_API_URI + "/Accounts/" + customer.id,
                               params: customer.sugar_account
       ## Update Contact
-      response = @request.put BASE_API_URI + "/Contacts/" + customer.id,
+      @request.put BASE_API_URI + "/Contacts/" + customer.id,
                               params: customer.sugar_contact
 
-      "Successfully updated customer"
+      "Customer #{customer.id} was updated."
     rescue => e
-      raise SugarcrmUpdateCustomerError, response + "\n" + e.message, caller
+      raise SugarcrmUpdateCustomerError, e.message, caller
     end
   end
 
