@@ -20,10 +20,9 @@ The following webhooks are implemented:
 
 | Name | Description |
 | :----| :-----------|
-| add_customer | Adds an ecommerce customer to SugarCRM. Creates an Account and a linked Contact within
-SugarCRM. |
+| add_customer | Adds an ecommerce Customer to SugarCRM. Creates an Account and a linked Contact within SugarCRM, both of which have an ID which is that of the Customer object sent from the Hub. |
 | update_customer | Updates an Account and linked Contact within SugarCRM. |
-| add_order | Adds an ecommerce order to SugarCRM. Creates an Opportunity within SugarCRM with a status of "Closed Won" |
+| add_order | Adds an ecommerce Order to SugarCRM. Creates an Opportunity within SugarCRM with a status of "Closed Won." The SugarCRM Opportunity has an ID which is that of the Order object sent from the Hub. |
 | update_order | Updates an ecommerce Order's corresponding Opportunity within SugarCRM. |
 
 ## Testing
