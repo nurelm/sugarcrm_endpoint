@@ -3,7 +3,6 @@ require 'oauth2'
 class Sugarcrm
   CLIENT_ID = "sugar"
   CLIENT_SECRET = ""
-  CLIENT_URL = "https://wycpng2607.trial.sugarcrm.com"
   BASE_API_URI = "/rest/v10"
 
   attr_accessor :order, :config, :payload, :request
@@ -19,7 +18,7 @@ class Sugarcrm
         @config['sugarcrm_username'].nil? || @config['sugarcrm_password'].nil?
     client = OAuth2::Client.new CLIENT_ID, CLIENT_SECRET,
                                 :token_url => BASE_API_URI + '/oauth2/token',
-                                :site => CLIENT_URL
+                                :site => @config['sugarcrm_url']
     token_request = client.password.get_token(
       @config['sugarcrm_username'], @config['sugarcrm_password'])
     token_string = token_request.token
