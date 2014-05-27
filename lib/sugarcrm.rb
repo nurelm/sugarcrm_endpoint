@@ -3,7 +3,6 @@ require 'oauth2'
 class Sugarcrm
   CLIENT_ID = "sugar"
   CLIENT_SECRET = ""
-  CLIENT_URL = "https://wycpng2607.trial.sugarcrm.com"
   BASE_API_URI = "/rest/v10"
 
   attr_accessor :order, :config, :payload, :request
@@ -19,7 +18,7 @@ class Sugarcrm
         @config['sugarcrm_username'].nil? || @config['sugarcrm_password'].nil?
     client = OAuth2::Client.new CLIENT_ID, CLIENT_SECRET,
                                 :token_url => BASE_API_URI + '/oauth2/token',
-                                :site => CLIENT_URL
+                                :site => @config['sugarcrm_url']
     token_request = client.password.get_token(
       @config['sugarcrm_username'], @config['sugarcrm_password'])
     token_string = token_request.token
@@ -42,8 +41,9 @@ class Sugarcrm
       @request.post BASE_API_URI + '/Contacts', params: customer.sugar_contact
   
       ## Associate Sugar Account and Contact
-      response = @request.post BASE_API_URI +
-                               "/Contacts/" + customer.id + "/link/accounts/" + customer.id
+      @request.post BASE_API_URI +
+                    "/Contacts/" + customer.id +
+                    "/link/accounts/" + customer.id
 
       "Customer #{customer.id} was added."
     rescue => e
@@ -75,6 +75,22 @@ class Sugarcrm
     begin
       ## Create matching Opportunity in SugarCRM
       @request.post BASE_API_URI + '/Opportunities', params: order.sugar_opportunity
+      
+      ## Create one RevenueLineItem in SugarCRM for each Order line item
+      ## and link to corresponding ProductTemplate and Opportunity.
+      order.sugar_revenue_line_items.each do |rli|
+        @request.post BASE_API_URI + '/RevenueLineItems', params: rli
+        @request.post BASE_API_URI +
+                      "/Opportunities/" + order.id +
+                      "/link/revenuelineitems/" + rli['id']
+                      
+        ## Todo:
+        ## The following relationship does not exist, find correct relationship 
+        ## to link RevenueLineItems to ProductTemplates
+        #@request.post BASE_API_URI +
+        #              "/ProductTemplates/" + rli['sku'] +
+        #              "/link/revenuelineitems/" + rli['id']
+      end
   
       ## Would be nice to associate with an Account, but how?
 
@@ -88,15 +104,46 @@ class Sugarcrm
   def update_order
     order = Order.new(@payload['order'])
     begin
-      ## Create matching Opportunity in SugarCRM
       @request.put BASE_API_URI + '/Opportunities/' + order.id,
                    params: order.sugar_opportunity
-  
-      ## Would be nice to associate with an Account, but how?
+
+      ## Todo:
+      ## Need to remove old RevenueLineItems and replace with new
 
       "Order #{order.id} was updated."
     rescue => e
       message = "Unable to update order #{order.id}: \n" + e.message
+      raise SugarcrmUpdateObjectError, message, caller
+    end
+  end
+  
+  def add_product
+    @payload['products'].each do |product_hash|
+      product = Product.new(product_hash) 
+      begin
+        ## Create matching ProductTemplate in SugarCRM
+        @request.post BASE_API_URI + '/ProductTemplates',
+                      params: product.sugar_product_template
+    
+        ## Would be nice to associate with an Account, but how?
+  
+        "Product #{product.id} was added."
+      rescue => e
+        message = "Unable to add product #{product.id}: \n" + e.message
+        raise SugarcrmAddObjectError, message, caller
+      end
+    end
+  end
+  
+  def update_product
+    product = Product.new(@payload['product'])
+    begin
+      @request.put BASE_API_URI + '/ProductTemplates/' + product.id,
+                   params: product.sugar_product_template
+  
+      "Product #{product.id} was updated."
+    rescue => e
+      message = "Unable to update product #{product.id}: \n" + e.message
       raise SugarcrmUpdateObjectError, message, caller
     end
   end
