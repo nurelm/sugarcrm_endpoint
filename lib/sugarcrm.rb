@@ -98,18 +98,20 @@ class Sugarcrm
   end
   
   def add_product
-    product = Product.new(@payload['product']) 
-    begin
-      ## Create matching ProductTemplate in SugarCRM
-      @request.post BASE_API_URI + '/ProductTemplates',
-                    params: product.sugar_product_template
+    @payload['products'].each do |product_element|
+      product = Product.new(product_element) 
+      begin
+        ## Create matching ProductTemplate in SugarCRM
+        @request.post BASE_API_URI + '/ProductTemplates',
+                      params: product.sugar_product_template
+    
+        ## Would be nice to associate with an Account, but how?
   
-      ## Would be nice to associate with an Account, but how?
-
-      "Product #{product.id} was added."
-    rescue => e
-      message = "Unable to add product #{product.id}: \n" + e.message
-      raise SugarcrmAddObjectError, message, caller
+        "Product #{product.id} was added."
+      rescue => e
+        message = "Unable to add product #{product.id}: \n" + e.message
+        raise SugarcrmAddObjectError, message, caller
+      end
     end
   end
   
