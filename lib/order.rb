@@ -24,6 +24,8 @@ class Order
   
   def sugar_revenue_line_items
     rlis = Array.new
+    
+    ## Add one RLI for each line item
     @spree_order['line_items'].each do |line_item|
       rli = Hash.new
       rli['id'] = @spree_order['id'] + "-" + line_item['product_id']
@@ -39,6 +41,22 @@ class Order
       rli['date_closed'] = DateTime.parse(@spree_order['placed_on']).to_date.to_s
       rlis.append(rli)
     end
+    
+    ## And one RLI for each adjustment, tax, shipping
+    ['adjustment', 'tax', 'shipping'].each do |adjustment|
+      rli = Hash.new
+      rli['id'] = @spree_order['id'] + "-" + adjustment
+      rli['name'] = adjustment
+      rli['quantity'] = 1
+      rli['cost_price'] = @spree_order['totals'][adjustment]
+      rli['list_price'] = @spree_order['totals'][adjustment]
+      rli['likely_case'] = @spree_order['totals'][adjustment]
+      rli['sales_stage'] = 'Closed Won'
+      rli['probability'] = 100
+      rli['date_closed'] = DateTime.parse(@spree_order['placed_on']).to_date.to_s
+      rlis.append(rli)
+    end
+    
     return rlis
   end
 
