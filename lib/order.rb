@@ -28,6 +28,7 @@ class Order
       rli = Hash.new
       rli['id'] = @spree_order['id'] + "-" + line_item['product_id']
       rli['sku'] = line_item['product_id']
+      rli['product_template_id'] = line_item['product_id']
       rli['name'] = line_item['name']
       rli['quantity'] = line_item['quantity']
       rli['cost_price'] = line_item['price']
