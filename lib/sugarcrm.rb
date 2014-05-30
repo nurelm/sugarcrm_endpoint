@@ -76,24 +76,23 @@ class Sugarcrm
       ## Create matching Opportunity in SugarCRM
       @request.post BASE_API_URI + '/Opportunities', params: order.sugar_opportunity
       
+      ## Associate with corresponding Sugar Account
+      @request.post BASE_API_URI +
+                    "/Opportunities/" + order.id +
+                    "/link/accounts/" + order.email
+      
       ## Create one RevenueLineItem in SugarCRM for each Order line item
       ## and link to corresponding ProductTemplate and Opportunity.
       order.sugar_revenue_line_items.each do |rli|
+        ## Create a RevenueLineItem ...
         @request.post BASE_API_URI + '/RevenueLineItems', params: rli
+
+        ## ... and link it to this Opportunity ...
         @request.post BASE_API_URI +
                       "/Opportunities/" + order.id +
                       "/link/revenuelineitems/" + rli['id']
-                      
-        ## Todo:
-        ## The following relationship does not exist, find correct relationship 
-        ## to link RevenueLineItems to ProductTemplates
-        #@request.post BASE_API_URI +
-        #              "/ProductTemplates/" + rli['sku'] +
-        #              "/link/revenuelineitems/" + rli['id']
       end
   
-      ## Would be nice to associate with an Account, but how?
-
       "Order #{order.id} was added."
     rescue => e
       message = "Unable to add order #{order.id}: \n" + e.message
