@@ -10,7 +10,7 @@ class Customer
   
   def sugar_account
     account = Hash.new
-    account['id'] = @spree_customer['id']
+    account['id'] = @spree_customer['email']
     account['name'] = "#{@spree_customer['firstname']} #{@spree_customer['lastname']}"
     account['description'] = "#{@spree_customer['firstname']} #{@spree_customer['lastname']}"
     account['email1'] = @spree_customer['email']

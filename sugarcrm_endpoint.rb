@@ -15,7 +15,8 @@ class SugarcrmEndpoint < EndpointBase::Sinatra::Base
     sugar_action('update_customer')
   end
 
-  get '/get_customer' do
+  post '/get_customer' do
+    "Coming soon ..."
   end
 
   post '/add_order' do
@@ -27,26 +28,31 @@ class SugarcrmEndpoint < EndpointBase::Sinatra::Base
   end
 
   get '/get_orders' do
+    "Coming soon ..."
   end
 
   post '/add_product' do
     sugar_action('add_product')
   end
 
-  put '/update_product' do
+  post '/update_product' do
     sugar_action('update_product')
   end
 
   get '/get_product' do
+    "Coming soon ..."
   end
 
   post '/add_shipment' do
+    sugar_action('add_order_shipment_notes')
   end
 
-  put '/update_shipment' do
+  post '/update_shipment' do
+    sugar_action('add_order_shipment_notes')
   end
 
   get '/get_shipment' do
+    "Coming soon ..."
   end
   
   def sugar_action(action)
