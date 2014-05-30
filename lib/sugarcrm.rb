@@ -116,6 +116,23 @@ class Sugarcrm
     end
   end
   
+  def add_order_shipment_notes
+    @payload['shipments'].each do |shipment_hash|
+      shipment = Shipment.new(shipment_hash)
+      begin
+        @request.post BASE_API_URI +
+                      "/Opportunities/" + shipment.order_id +
+                      "/link/notes/",
+                      params: shipment.sugar_note
+
+        "Notes for shipment #{shipment.id} were added."
+      rescue => e
+        message = "Unable to add notes for shipment #{shipment.id}: \n" + e.message
+        raise SugarcrmAddObjectError, message, caller
+      end
+    end
+  end
+  
   def add_product
     @payload['products'].each do |product_hash|
       product = Product.new(product_hash) 
@@ -124,8 +141,6 @@ class Sugarcrm
         @request.post BASE_API_URI + '/ProductTemplates',
                       params: product.sugar_product_template
     
-        ## Would be nice to associate with an Account, but how?
-  
         "Product #{product.id} was added."
       rescue => e
         message = "Unable to add product #{product.id}: \n" + e.message
