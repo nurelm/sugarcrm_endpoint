@@ -9,6 +9,10 @@ class Order
   def id
     @spree_order['id']
   end
+
+  def email
+    @spree_order['email']
+  end
   
   def sugar_opportunity
     opportunity = Hash.new
