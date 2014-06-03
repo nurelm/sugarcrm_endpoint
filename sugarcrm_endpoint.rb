@@ -1,8 +1,7 @@
 require "sinatra"
 require "endpoint_base"
 
-require File.expand_path(File.dirname(__FILE__) + '/lib/sugarcrm.rb')
-Dir['./lib/**/*.rb'].each { |f| require f }
+require_all 'lib'
 
 class SugarcrmEndpoint < EndpointBase::Sinatra::Base
   set :logging, true
