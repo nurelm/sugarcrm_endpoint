@@ -7,6 +7,10 @@ class Customer
   def id
     @spree_customer['id']
   end
+
+  def email
+    @spree_customer['email']
+  end
   
   def sugar_account
     account = Hash.new

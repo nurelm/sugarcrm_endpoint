@@ -43,7 +43,7 @@ class Sugarcrm
       ## Associate Sugar Account and Contact
       @request.post BASE_API_URI +
                     "/Contacts/" + customer.id +
-                    "/link/accounts/" + customer.id
+                    "/link/accounts/" + customer.email
 
       "Customer #{customer.id} was added."
     rescue => e
