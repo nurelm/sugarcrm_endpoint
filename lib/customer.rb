@@ -4,6 +4,13 @@ class Customer
 
   def initialize(spree_customer = {})
     @spree_customer = spree_customer
+    
+    if @spree_customer['first_name'].nil? || @spree_customer['first_name'].empty?
+      @spree_customer['first_name'] = @spree_customer['billing_address']['firstname']
+    end
+    if @spree_customer['last_name'].nil? || @spree_customer['last_name'].empty?
+      @spree_customer['last_name'] = @spree_customer['billing_address']['lastname']
+    end
   end
   
   def spree_id
