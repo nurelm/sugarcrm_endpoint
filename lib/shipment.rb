@@ -4,12 +4,12 @@ class Shipment
     @spree_shipment = spree_shipment
   end
   
-  def id
+  def spree_id
     @spree_shipment['id']
   end
   
   def order_id
-    @spree_shipment['order_id']
+    'hub-' + @spree_shipment['order_id']
   end
   
   def sugar_note
