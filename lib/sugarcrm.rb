@@ -113,9 +113,10 @@ class Sugarcrm
                       "/link/notes/",
                       params: shipment.sugar_note
 
-        "Notes for shipment #{shipment.id} were added."
+        "Notes for shipment with Hub ID #{shipment.spree_id} were added."
       rescue => e
-        message = "Unable to add notes for shipment #{shipment.id}: \n" + e.message
+        message = "Unable to add notes for shipment with Hub ID #{shipment.spree_id}: \n" +
+                  e.message
         raise SugarcrmAddUpdateObjectError, message, caller
       end
     end
