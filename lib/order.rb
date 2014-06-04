@@ -16,6 +16,7 @@ class Order
   
   def sugar_opportunity
     opportunity = Hash.new
+    opportunity['id'] = 'hub-' + spree_id
     opportunity['sales_stage'] = 'Closed Won'
     opportunity['name'] = "Spree Hub ID #{@spree_order['id']}"
     opportunity['description'] = @spree_order.to_s

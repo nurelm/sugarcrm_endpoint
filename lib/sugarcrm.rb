@@ -77,6 +77,8 @@ class Sugarcrm
                       "/Opportunities/" + sugar_opp_id +
                       "/link/revenuelineitems",
                       params: rli
+        
+        ## Todo: Associate with products
       end
   
       "Order with Hub ID #{order.spree_id} was added."
@@ -93,8 +95,7 @@ class Sugarcrm
                    params: order.sugar_opportunity
 
       ## Todo:
-      ## Make Opportunities have Hub ID, then delete that Opportunity's RLIs
-      ## here and recreate?
+      ## Delete Opportunity's RLIs here and recreate
 
       "Order #{order.id} was updated."
     rescue => e
