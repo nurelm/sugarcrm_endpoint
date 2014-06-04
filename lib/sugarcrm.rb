@@ -73,12 +73,12 @@ class Sugarcrm
       ## Create one RevenueLineItem in SugarCRM for each Order line item
       ## and link to corresponding ProductTemplate and Opportunity.
       order.sugar_revenue_line_items.each do |rli|
-        @request.post BASE_API_URI +
-                      "/Opportunities/" + sugar_opp_id +
-                      "/link/revenuelineitems",
-                      params: rli
-        
-        ## Todo: Associate with products
+        oauth_response = @request.post BASE_API_URI +
+                                       "/Opportunities/" + sugar_opp_id +
+                                       "/link/revenuelineitems",
+                                       params: rli
+
+        ## Todo: Create product for each RLI if one does not exist 
       end
   
       "Order with Hub ID #{order.spree_id} was added."
@@ -121,6 +121,8 @@ class Sugarcrm
     end
   end
   
+  ## Todo: Instead of setting Sugar's ProductTemplate id to the sku, put the
+  ## sku in a field.
   def add_product
     @payload['products'].each do |product_hash|
       product = Product.new(product_hash) 
