@@ -1,18 +1,17 @@
 require "sinatra"
 require "endpoint_base"
 
-require File.expand_path(File.dirname(__FILE__) + '/lib/sugarcrm.rb')
-Dir['./lib/**/*.rb'].each { |f| require f }
+require_all 'lib'
 
 class SugarcrmEndpoint < EndpointBase::Sinatra::Base
   set :logging, true
   
   post '/add_customer' do
-    sugar_action('add_customer')
+    sugar_action('add_update_customer')
   end
 
   post '/update_customer' do
-    sugar_action('update_customer')
+    sugar_action('add_update_customer')
   end
 
   post '/get_customer' do
