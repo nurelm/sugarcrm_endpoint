@@ -7,11 +7,11 @@ class SugarcrmEndpoint < EndpointBase::Sinatra::Base
   set :logging, true
   
   post '/add_customer' do
-    sugar_action('add_customer')
+    sugar_action('add_update_customer')
   end
 
   post '/update_customer' do
-    sugar_action('update_customer')
+    sugar_action('add_update_customer')
   end
 
   post '/get_customer' do

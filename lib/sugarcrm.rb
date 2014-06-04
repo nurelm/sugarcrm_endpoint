@@ -1,4 +1,5 @@
 require 'oauth2'
+require 'json'
 
 class Sugarcrm
   CLIENT_ID = "sugar"
@@ -18,7 +19,12 @@ class Sugarcrm
         @config['sugarcrm_username'].nil? || @config['sugarcrm_password'].nil?
     client = OAuth2::Client.new CLIENT_ID, CLIENT_SECRET,
                                 :token_url => BASE_API_URI + '/oauth2/token',
-                                :site => @config['sugarcrm_url']
+                                :site => @config['sugarcrm_url'],
+                                :connection_opts => {
+                                  :request => {
+                                    :params_encoder => Faraday::FlatParamsEncoder
+                                  }
+                                }
     token_request = client.password.get_token(
       @config['sugarcrm_username'], @config['sugarcrm_password'])
     token_string = token_request.token
@@ -33,43 +39,19 @@ class Sugarcrm
     (ENV['SUGARCRM_ENDPOINT_SERVER_MODE'] || 'Test').capitalize
   end
 
-  def add_customer
+  def add_update_customer
     customer = Customer.new(@payload['customer'])
     begin
-      ## Create identical Account and Contact in Sugar
-      @request.post BASE_API_URI + '/Accounts', params: customer.sugar_account
-      @request.post BASE_API_URI + '/Contacts', params: customer.sugar_contact
-  
-      ## Associate Sugar Account and Contact
-      @request.post BASE_API_URI +
-                    "/Contacts/" + customer.id +
-                    "/link/accounts/" + customer.email
-
-      "Customer #{customer.id} was added."
+      sugar_contact_id = get_sugar_contact_id(customer)
+      customer.sugar_contact_id = sugar_contact_id
+      sugar_account_id = get_sugar_account_id(customer)
+      "Customer with Hub ID #{customer.spree_id} was added / updated."
     rescue => e
-      message = "Unable to add customer #{customer.id}: \n" + e.message
-      raise SugarcrmAddObjectError, message, caller
+      message = "Unable to add / update customer with Hub ID #{customer.spree_id}: \n" + e.message
+      raise SugarcrmAddUpdateObjectError, message, caller
     end
   end
   
-  def update_customer
-    customer = Customer.new(@payload['customer'])
-    begin
-      ## Update Account
-      @request.put BASE_API_URI + "/Accounts/" + customer.id,
-                   params: customer.sugar_account
-
-      ## Update Contact
-      @request.put BASE_API_URI + "/Contacts/" + customer.id,
-                   params: customer.sugar_contact
-
-      "Customer #{customer.id} was updated."
-    rescue => e
-      message = "Unable to update customer #{customer.id}: \n" + e.message
-      raise SugarcrmUpdateObjectError, message, caller
-    end
-  end
-
   def add_order
     order = Order.new(@payload['order']) 
     begin
@@ -96,7 +78,7 @@ class Sugarcrm
       "Order #{order.id} was added."
     rescue => e
       message = "Unable to add order #{order.id}: \n" + e.message
-      raise SugarcrmAddObjectError, message, caller
+      raise SugarcrmAddUpdateObjectError, message, caller
     end
   end
   
@@ -112,7 +94,7 @@ class Sugarcrm
       "Order #{order.id} was updated."
     rescue => e
       message = "Unable to update order #{order.id}: \n" + e.message
-      raise SugarcrmUpdateObjectError, message, caller
+      raise SugarcrmAddUpdateObjectError, message, caller
     end
   end
   
@@ -128,7 +110,7 @@ class Sugarcrm
         "Notes for shipment #{shipment.id} were added."
       rescue => e
         message = "Unable to add notes for shipment #{shipment.id}: \n" + e.message
-        raise SugarcrmAddObjectError, message, caller
+        raise SugarcrmAddUpdateObjectError, message, caller
       end
     end
   end
@@ -144,7 +126,7 @@ class Sugarcrm
         "Product #{product.id} was added."
       rescue => e
         message = "Unable to add product #{product.id}: \n" + e.message
-        raise SugarcrmAddObjectError, message, caller
+        raise SugarcrmAddUpdateObjectError, message, caller
       end
     end
   end
@@ -158,12 +140,55 @@ class Sugarcrm
       "Product #{product.id} was updated."
     rescue => e
       message = "Unable to update product #{product.id}: \n" + e.message
-      raise SugarcrmUpdateObjectError, message, caller
+      raise SugarcrmAddUpdateObjectError, message, caller
     end
   end
   
+  ######################
+  
+  private
+  
+  def get_sugar_contact_id(customer)
+    oauth_response = @request.get BASE_API_URI + '/Contacts/filter' +
+                                                 '?filter[0][email_addresses.email_address]=' +
+                                                 customer.email +
+                                                 '&fields=id'
+    begin
+      sugar_id = JSON.parse(oauth_response.response.body)['records'][0]['id']
+      @request.put BASE_API_URI + "/Contacts/" + sugar_id,
+                   params: customer.sugar_contact
+    rescue
+      ## If that failed, it means a contact with that email does not exist, and
+      ## we will have to create one.
+      oauth_response = @request.post BASE_API_URI + '/Contacts', params: customer.sugar_contact
+      sugar_id = JSON.parse(oauth_response.response.body)['id']
+    end
+    
+    sugar_id
+  end
+
+  def get_sugar_account_id(customer)
+    oauth_response = @request.get BASE_API_URI + '/Accounts/filter' +
+                                                 '?filter[0][contacts.id]=' +
+                                                 customer.sugar_contact_id +
+                                                 '&fields=id'
+    begin
+      ## Unlike with a contact, do not update parent accounts that already exist.
+      sugar_id = JSON.parse(oauth_response.response.body)['records'][0]['id']
+    rescue
+      ## If that failed, it means no account with a contact with that email exists, and
+      ## we need to create one, then link to the contact.
+      oauth_response = @request.post BASE_API_URI + '/Accounts', params: customer.sugar_account
+      sugar_id = JSON.parse(oauth_response.response.body)['id']
+      @request.post BASE_API_URI +
+                    "/Contacts/" + customer.sugar_contact_id +
+                    "/link/accounts/" + sugar_id
+    end
+    
+    sugar_id
+  end
+
 end
 
 class AuthenticationError < StandardError; end
-class SugarcrmAddObjectError < StandardError; end
-class SugarcrmUpdateObjectError < StandardError; end
+class SugarcrmAddUpdateObjectError < StandardError; end

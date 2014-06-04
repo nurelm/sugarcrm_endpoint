@@ -1,10 +1,12 @@
 class Customer
+  
+  attr_accessor :sugar_contact_id
 
   def initialize(spree_customer = {})
     @spree_customer = spree_customer
   end
   
-  def id
+  def spree_id
     @spree_customer['id']
   end
 
@@ -14,7 +16,6 @@ class Customer
   
   def sugar_account
     account = Hash.new
-    account['id'] = @spree_customer['email']
     account['name'] = "#{@spree_customer['firstname']} #{@spree_customer['lastname']}"
     account['description'] = "#{@spree_customer['firstname']} #{@spree_customer['lastname']}"
     account['email1'] = @spree_customer['email']
@@ -38,7 +39,6 @@ class Customer
   
   def sugar_contact
     contact = Hash.new
-    contact['id'] = @spree_customer['id']
     contact['first_name'] = @spree_customer['firstname']
     contact['last_name'] = @spree_customer['lastname']
     contact['description'] = "#{@spree_customer['firstname']} #{@spree_customer['lastname']}"
