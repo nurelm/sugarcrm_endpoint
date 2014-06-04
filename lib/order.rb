@@ -6,7 +6,7 @@ class Order
     @spree_order = spree_order
   end
   
-  def id
+  def spree_id
     @spree_order['id']
   end
 
@@ -16,7 +16,6 @@ class Order
   
   def sugar_opportunity
     opportunity = Hash.new
-    opportunity['id'] = @spree_order['id']
     opportunity['sales_stage'] = 'Closed Won'
     opportunity['name'] = "Spree Hub ID #{@spree_order['id']}"
     opportunity['description'] = @spree_order.to_s
@@ -32,7 +31,6 @@ class Order
     ## Add one RLI for each line item
     @spree_order['line_items'].each do |line_item|
       rli = Hash.new
-      rli['id'] = @spree_order['id'] + "-" + line_item['product_id']
       rli['sku'] = line_item['product_id']
       rli['product_template_id'] = line_item['product_id']
       rli['name'] = line_item['name']
@@ -49,7 +47,6 @@ class Order
     ## And one RLI for each adjustment, tax, shipping
     ['adjustment', 'tax', 'shipping'].each do |adjustment|
       rli = Hash.new
-      rli['id'] = @spree_order['id'] + "-" + adjustment
       rli['name'] = adjustment
       rli['quantity'] = 1
       rli['cost_price'] = @spree_order['totals'][adjustment]

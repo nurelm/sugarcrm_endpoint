@@ -54,30 +54,34 @@ class Sugarcrm
   
   def add_order
     order = Order.new(@payload['order']) 
+    customer = Customer.new(@payload['order']) 
     begin
-      ## Create matching Opportunity in SugarCRM
-      @request.post BASE_API_URI + '/Opportunities', params: order.sugar_opportunity
+      sugar_contact_id = get_sugar_contact_id(customer)
+      customer.sugar_contact_id = sugar_contact_id
+      sugar_account_id = get_sugar_account_id(customer)
+
+      ## Create Opportunity in SugarCRM
+      oauth_response = @request.post BASE_API_URI + '/Opportunities',
+                                     params: order.sugar_opportunity
+      sugar_opp_id = JSON.parse(oauth_response.response.body)['id']
       
       ## Associate with corresponding Sugar Account
       @request.post BASE_API_URI +
-                    "/Opportunities/" + order.id +
-                    "/link/accounts/" + order.email
+                    "/Opportunities/" + sugar_opp_id +
+                    "/link/accounts/" + sugar_account_id
       
       ## Create one RevenueLineItem in SugarCRM for each Order line item
       ## and link to corresponding ProductTemplate and Opportunity.
       order.sugar_revenue_line_items.each do |rli|
-        ## Create a RevenueLineItem ...
-        @request.post BASE_API_URI + '/RevenueLineItems', params: rli
-
-        ## ... and link it to this Opportunity ...
         @request.post BASE_API_URI +
-                      "/Opportunities/" + order.id +
-                      "/link/revenuelineitems/" + rli['id']
+                      "/Opportunities/" + sugar_opp_id +
+                      "/link/revenuelineitems",
+                      params: rli
       end
   
-      "Order #{order.id} was added."
+      "Order with Hub ID #{order.spree_id} was added."
     rescue => e
-      message = "Unable to add order #{order.id}: \n" + e.message
+      message = "Unable to add order #{order.spree_id}: \n" + e.message
       raise SugarcrmAddUpdateObjectError, message, caller
     end
   end
@@ -89,7 +93,8 @@ class Sugarcrm
                    params: order.sugar_opportunity
 
       ## Todo:
-      ## Need to remove old RevenueLineItems and replace with new
+      ## Make Opportunities have Hub ID, then delete that Opportunity's RLIs
+      ## here and recreate?
 
       "Order #{order.id} was updated."
     rescue => e
