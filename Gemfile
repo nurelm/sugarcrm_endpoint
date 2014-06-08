@@ -3,7 +3,8 @@ source 'https://rubygems.org'
 
 gem 'sinatra'
 gem 'tilt', '~> 1.4.1'
-gem 'tilt-jbuilder', require: 'sinatra/jbuilder'
+gem 'tilt-jbuilder'
+gem 'jbuilder', '2.0.7'
 gem 'capistrano'
 gem 'oauth2', git: 'git://github.com/nurelm/oauth2.git'
 gem 'require_all'
@@ -24,7 +25,7 @@ group :test do
 end
 
 group :production do
-  gem 'foreman'
+  gem 'foreman', '0.66.0'
   gem 'unicorn'
 end
 
