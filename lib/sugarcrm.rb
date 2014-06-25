@@ -36,7 +36,7 @@ class Sugarcrm
 
   def server_mode
     # Augury.test? ? 'Test' : 'Production'
-    (ENV['SUGARCRM_ENDPOINT_SERVER_MODE'] || 'Test').capitalize
+    (ENV['SUGARCRM_INTEGRATION_SERVER_MODE'] || 'Test').capitalize
   end
 
   def add_update_customer
@@ -51,10 +51,10 @@ class Sugarcrm
       raise SugarcrmAddUpdateObjectError, message, caller
     end
   end
-  
+
   def add_order
-    order = Order.new(@payload['order']) 
-    customer = Customer.new(@payload['order']) 
+    order = Order.new(@payload['order'])
+    customer = Customer.new(@payload['order'])
     begin
       sugar_contact_id = get_sugar_contact_id(customer)
       customer.sugar_contact_id = sugar_contact_id
@@ -64,12 +64,12 @@ class Sugarcrm
       oauth_response = @request.post BASE_API_URI + '/Opportunities',
                                      params: order.sugar_opportunity
       sugar_opp_id = JSON.parse(oauth_response.response.body)['id']
-      
+
       ## Associate with corresponding Sugar Account
       @request.post BASE_API_URI +
                     "/Opportunities/" + sugar_opp_id +
                     "/link/accounts/" + sugar_account_id
-      
+
       ## Create one RevenueLineItem in SugarCRM for each Order line item
       ## and link to corresponding ProductTemplate and Opportunity.
       order.sugar_revenue_line_items.each do |rli|
@@ -78,16 +78,16 @@ class Sugarcrm
                                        "/link/revenuelineitems",
                                        params: rli
 
-        ## Todo: Create product for each RLI if one does not exist 
+        ## Todo: Create product for each RLI if one does not exist
       end
-  
+
       "Order with Hub ID #{order.spree_id} was added."
     rescue => e
       message = "Unable to add order #{order.spree_id}: \n" + e.message
       raise SugarcrmAddUpdateObjectError, message, caller
     end
   end
-  
+
   def update_order
     order = Order.new(@payload['order'])
     begin
@@ -103,7 +103,7 @@ class Sugarcrm
       raise SugarcrmAddUpdateObjectError, message, caller
     end
   end
-  
+
   def add_order_shipment_notes
     @payload['shipments'].each do |shipment_hash|
       shipment = Shipment.new(shipment_hash)
@@ -121,17 +121,17 @@ class Sugarcrm
       end
     end
   end
-  
+
   ## Todo: Instead of setting Sugar's ProductTemplate id to the sku, put the
   ## sku in a field.
   def add_product
     @payload['products'].each do |product_hash|
-      product = Product.new(product_hash) 
+      product = Product.new(product_hash)
       begin
         ## Create matching ProductTemplate in SugarCRM
         @request.post BASE_API_URI + '/ProductTemplates',
                       params: product.sugar_product_template
-    
+
         "Product #{product.id} was added."
       rescue => e
         message = "Unable to add product #{product.id}: \n" + e.message
@@ -139,24 +139,24 @@ class Sugarcrm
       end
     end
   end
-  
+
   def update_product
     product = Product.new(@payload['product'])
     begin
       @request.put BASE_API_URI + '/ProductTemplates/' + product.id,
                    params: product.sugar_product_template
-  
+
       "Product #{product.id} was updated."
     rescue => e
       message = "Unable to update product #{product.id}: \n" + e.message
       raise SugarcrmAddUpdateObjectError, message, caller
     end
   end
-  
+
   ######################
-  
+
   private
-  
+
   def get_sugar_contact_id(customer)
     oauth_response = @request.get BASE_API_URI + '/Contacts/filter' +
                                                  '?filter[0][email_addresses.email_address]=' +
@@ -172,7 +172,7 @@ class Sugarcrm
       oauth_response = @request.post BASE_API_URI + '/Contacts', params: customer.sugar_contact
       sugar_id = JSON.parse(oauth_response.response.body)['id']
     end
-    
+
     sugar_id
   end
 
@@ -193,7 +193,7 @@ class Sugarcrm
                     "/Contacts/" + customer.sugar_contact_id +
                     "/link/accounts/" + sugar_id
     end
-    
+
     sugar_id
   end
 

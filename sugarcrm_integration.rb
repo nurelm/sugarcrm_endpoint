@@ -3,9 +3,9 @@ require "endpoint_base"
 
 require_all 'lib'
 
-class SugarcrmEndpoint < EndpointBase::Sinatra::Base
+class SugarcrmIntegration < EndpointBase::Sinatra::Base
   set :logging, true
-  
+
   post '/add_customer' do
     sugar_action('add_update_customer')
   end
@@ -53,7 +53,7 @@ class SugarcrmEndpoint < EndpointBase::Sinatra::Base
   get '/get_shipment' do
     "Coming soon ..."
   end
-  
+
   def sugar_action(action)
     begin
       sugarcrm = Sugarcrm.new(@payload, @config)
