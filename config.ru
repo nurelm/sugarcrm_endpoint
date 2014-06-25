@@ -2,5 +2,5 @@ require 'rubygems'
 require 'bundler'
 
 Bundler.require(:default)
-require "./sugarcrm_endpoint"
-run SugarcrmEndpoint
+require "./sugarcrm_integration"
+run SugarcrmIntegration
