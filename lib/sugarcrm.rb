@@ -45,9 +45,9 @@ class Sugarcrm
       sugar_contact_id = get_sugar_contact_id(customer)
       customer.sugar_contact_id = sugar_contact_id
       sugar_account_id = get_sugar_account_id(customer)
-      "Customer with Hub ID #{customer.spree_id} was added / updated."
+      "Customer with Wombat ID #{customer.spree_id} was added / updated."
     rescue => e
-      message = "Unable to add / update customer with Hub ID #{customer.spree_id}: \n" + e.message
+      message = "Unable to add / update customer with Wombat ID #{customer.spree_id}: \n" + e.message
       raise SugarcrmAddUpdateObjectError, message, caller
     end
   end
@@ -81,7 +81,7 @@ class Sugarcrm
         ## Todo: Create product for each RLI if one does not exist
       end
 
-      "Order with Hub ID #{order.spree_id} was added."
+      "Order with Wombat ID #{order.spree_id} was added."
     rescue => e
       message = "Unable to add order #{order.spree_id}: \n" + e.message
       raise SugarcrmAddUpdateObjectError, message, caller
@@ -113,9 +113,9 @@ class Sugarcrm
                       "/link/notes/",
                       params: shipment.sugar_note
 
-        "Notes for shipment with Hub ID #{shipment.spree_id} were added."
+        "Notes for shipment with Wombat ID #{shipment.spree_id} were added."
       rescue => e
-        message = "Unable to add notes for shipment with Hub ID #{shipment.spree_id}: \n" +
+        message = "Unable to add notes for shipment with Wombat ID #{shipment.spree_id}: \n" +
                   e.message
         raise SugarcrmAddUpdateObjectError, message, caller
       end

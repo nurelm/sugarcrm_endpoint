@@ -5,7 +5,7 @@ class Order
   def initialize(spree_order = {})
     @spree_order = spree_order
   end
-  
+
   def spree_id
     @spree_order['id']
   end
@@ -13,22 +13,22 @@ class Order
   def email
     @spree_order['email']
   end
-  
+
   def sugar_opportunity
     opportunity = Hash.new
-    opportunity['id'] = 'hub-' + spree_id
+    opportunity['id'] = 'wombat-' + spree_id
     opportunity['sales_stage'] = 'Closed Won'
-    opportunity['name'] = "Spree Hub ID #{@spree_order['id']}"
+    opportunity['name'] = "Wombat ID #{@spree_order['id']}"
     opportunity['description'] = @spree_order.to_s
     opportunity['lead_source'] = 'ecomm'
     opportunity['date_closed'] = DateTime.parse(@spree_order['placed_on']).to_date.to_s
     opportunity['amount'] = @spree_order['totals']['order']
     return opportunity
   end
-  
+
   def sugar_revenue_line_items
     rlis = Array.new
-    
+
     ## Add one RLI for each line item
     @spree_order['line_items'].each do |line_item|
       rli = Hash.new
@@ -44,7 +44,7 @@ class Order
       rli['date_closed'] = DateTime.parse(@spree_order['placed_on']).to_date.to_s
       rlis.append(rli)
     end
-    
+
     ## And one RLI for each adjustment, tax, shipping
     ['adjustment', 'tax', 'shipping'].each do |adjustment|
       rli = Hash.new
@@ -58,7 +58,7 @@ class Order
       rli['date_closed'] = DateTime.parse(@spree_order['placed_on']).to_date.to_s
       rlis.append(rli)
     end
-    
+
     return rlis
   end
 
