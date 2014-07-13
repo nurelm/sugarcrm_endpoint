@@ -25,7 +25,10 @@ class Customer
     account = Hash.new
     account['name'] = "#{@spree_customer['firstname']} #{@spree_customer['lastname']}"
     account['description'] = "#{@spree_customer['firstname']} #{@spree_customer['lastname']}"
-    account['email1'] = @spree_customer['email']
+    account['email'] = [{
+      'email_address' => @spree_customer['email'],
+      'primary_address' => true
+    }]
     account['shipping_address_street'] = @spree_customer['shipping_address']['address1']
     account['shipping_address_street_2'] = @spree_customer['shipping_address']['address2']
     account['shipping_address_city'] = @spree_customer['shipping_address']['city']
@@ -49,7 +52,10 @@ class Customer
     contact['first_name'] = @spree_customer['firstname']
     contact['last_name'] = @spree_customer['lastname']
     contact['description'] = "#{@spree_customer['firstname']} #{@spree_customer['lastname']}"
-    contact['email1'] = @spree_customer['email']
+    contact['email'] = [{
+      'email_address' => @spree_customer['email'],
+      'primary_address' => true
+    }]
     contact['primary_address_street'] = @spree_customer['shipping_address']['address1']
     contact['primary_address_street_2'] = @spree_customer['shipping_address']['address2']
     contact['primary_address_city'] = @spree_customer['shipping_address']['city']

@@ -1,4 +1,3 @@
-require 'oauth2'
 require 'json'
 
 class Sugarcrm
@@ -17,21 +16,13 @@ class Sugarcrm
   def authenticate!
     raise AuthenticationError if
         @config['sugarcrm_username'].nil? || @config['sugarcrm_password'].nil?
-    client = OAuth2::Client.new CLIENT_ID, CLIENT_SECRET,
-                                :token_url => BASE_API_URI + '/oauth2/token',
-                                :site => @config['sugarcrm_url'],
-                                :connection_opts => {
-                                  :request => {
-                                    :params_encoder => Faraday::FlatParamsEncoder
-                                  }
-                                }
-    token_request = client.password.get_token(
-      @config['sugarcrm_username'], @config['sugarcrm_password'])
-    token_string = token_request.token
-    @request = OAuth2::AccessToken.new client,
-                                       token_string,
-                                       :header_format => "%s",
-                                       :header_auth_field => "OAuth-Token"
+
+    @client = Oauth2Client.new CLIENT_ID,
+                               CLIENT_SECRET,
+                               BASE_API_URI,
+                               @config['sugarcrm_url'],
+                               @config['sugarcrm_username'],
+                               @config['sugarcrm_password']
   end
 
   def server_mode
@@ -61,22 +52,20 @@ class Sugarcrm
       sugar_account_id = get_sugar_account_id(customer)
 
       ## Create Opportunity in SugarCRM
-      oauth_response = @request.post BASE_API_URI + '/Opportunities',
-                                     params: order.sugar_opportunity
-      sugar_opp_id = JSON.parse(oauth_response.response.body)['id']
+      oauth_response = @client.post '/Opportunities',
+                                    order.sugar_opportunity
+      sugar_opp_id = oauth_response['id']
       
       ## Associate with corresponding Sugar Account
-      @request.post BASE_API_URI +
-                    "/Opportunities/" + sugar_opp_id +
-                    "/link/accounts/" + sugar_account_id
+      @client.post "/Opportunities/" + sugar_opp_id +
+                   "/link/accounts/" + sugar_account_id
       
       ## Create one RevenueLineItem in SugarCRM for each Order line item
       ## and link to corresponding ProductTemplate and Opportunity.
       order.sugar_revenue_line_items.each do |rli|
-        oauth_response = @request.post BASE_API_URI +
-                                       "/Opportunities/" + sugar_opp_id +
-                                       "/link/revenuelineitems",
-                                       params: rli
+        oauth_response = @client.post "/Opportunities/" + sugar_opp_id +
+                                      "/link/revenuelineitems",
+                                      rli
 
         ## Todo: Create product for each RLI if one does not exist 
       end
@@ -91,8 +80,8 @@ class Sugarcrm
   def update_order
     order = Order.new(@payload['order'])
     begin
-      @request.put BASE_API_URI + '/Opportunities/' + order.id,
-                   params: order.sugar_opportunity
+      @client.put '/Opportunities/' + order.id,
+                  order.sugar_opportunity
 
       ## Todo:
       ## Delete Opportunity's RLIs here and recreate
@@ -108,10 +97,9 @@ class Sugarcrm
     @payload['shipments'].each do |shipment_hash|
       shipment = Shipment.new(shipment_hash)
       begin
-        @request.post BASE_API_URI +
-                      "/Opportunities/" + shipment.order_id +
+        @client.post "/Opportunities/" + shipment.order_id +
                       "/link/notes/",
-                      params: shipment.sugar_note
+                      shipment.sugar_note
 
         "Notes for shipment with Hub ID #{shipment.spree_id} were added."
       rescue => e
@@ -122,29 +110,40 @@ class Sugarcrm
     end
   end
   
-  ## Todo: Instead of setting Sugar's ProductTemplate id to the sku, put the
-  ## sku in a field.
-  def add_product
+  def add_update_products
     @payload['products'].each do |product_hash|
       product = Product.new(product_hash) 
+      
       begin
-        ## Create matching ProductTemplate in SugarCRM
-        @request.post BASE_API_URI + '/ProductTemplates',
-                      params: product.sugar_product_template
-    
-        "Product #{product.id} was added."
+        ## If we find this product, update it
+        @client.get '/ProductTemplates/' + product.id
+        update_product product 
       rescue => e
-        message = "Unable to add product #{product.id}: \n" + e.message
-        raise SugarcrmAddUpdateObjectError, message, caller
+        ## If we don't find this product, add it
+        add_product product
       end
     end
   end
   
-  def update_product
-    product = Product.new(@payload['product'])
+  ## Todo: Instead of setting Sugar's ProductTemplate id to the sku, put the
+  ## sku in a field.
+  def add_product product
     begin
-      @request.put BASE_API_URI + '/ProductTemplates/' + product.id,
-                   params: product.sugar_product_template
+      ## Create matching ProductTemplate in SugarCRM
+      @client.post '/ProductTemplates',
+                   product.sugar_product_template
+  
+      "Product #{product.id} was added."
+    rescue => e
+      message = "Unable to add product #{product.id}: \n" + e.message
+      raise SugarcrmAddUpdateObjectError, message, caller
+    end
+  end
+  
+  def update_product product
+    begin
+      @client.put '/ProductTemplates/' + product.id,
+                  product.sugar_product_template
   
       "Product #{product.id} was updated."
     rescue => e
@@ -158,40 +157,40 @@ class Sugarcrm
   private
   
   def get_sugar_contact_id(customer)
-    oauth_response = @request.get BASE_API_URI + '/Contacts/filter' +
-                                                 '?filter[0][email_addresses.email_address]=' +
-                                                 customer.email +
-                                                 '&fields=id'
+    oauth_response = @client.get '/Contacts/' +
+                                 '?filter[0][email_addresses.email_address_caps]=' +
+                                 customer.email.upcase +
+                                 '&fields=id'
     begin
-      sugar_id = JSON.parse(oauth_response.response.body)['records'][0]['id']
-      @request.put BASE_API_URI + "/Contacts/" + sugar_id,
-                   params: customer.sugar_contact
+      sugar_id = oauth_response['records'][0]['id']
+      @client.put "/Contacts/" + sugar_id,
+                  customer.sugar_contact
     rescue
       ## If that failed, it means a contact with that email does not exist, and
       ## we will have to create one.
-      oauth_response = @request.post BASE_API_URI + '/Contacts', params: customer.sugar_contact
-      sugar_id = JSON.parse(oauth_response.response.body)['id']
+      oauth_response = @client.post '/Contacts', customer.sugar_contact
+      sugar_id = oauth_response['id']
     end
     
     sugar_id
   end
 
   def get_sugar_account_id(customer)
-    oauth_response = @request.get BASE_API_URI + '/Accounts/filter' +
-                                                 '?filter[0][contacts.id]=' +
-                                                 customer.sugar_contact_id +
-                                                 '&fields=id'
+    oauth_response = @client.get '/Accounts/filter' +
+                                 '?filter[0][contacts.id]=' +
+                                 customer.sugar_contact_id +
+                                 '&fields=id'
     begin
       ## Unlike with a contact, do not update parent accounts that already exist.
-      sugar_id = JSON.parse(oauth_response.response.body)['records'][0]['id']
+      sugar_id = oauth_response['records'][0]['id']
     rescue
       ## If that failed, it means no account with a contact with that email exists, and
       ## we need to create one, then link to the contact.
-      oauth_response = @request.post BASE_API_URI + '/Accounts', params: customer.sugar_account
-      sugar_id = JSON.parse(oauth_response.response.body)['id']
-      @request.post BASE_API_URI +
-                    "/Contacts/" + customer.sugar_contact_id +
-                    "/link/accounts/" + sugar_id
+      oauth_response = @client.post '/Accounts', customer.sugar_account
+      sugar_id = oauth_response['id']
+      @client.post "/Contacts/" + customer.sugar_contact_id +
+                   "/link/accounts/" + sugar_id,
+                   {}
     end
     
     sugar_id
