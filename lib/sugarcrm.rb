@@ -110,26 +110,37 @@ class Sugarcrm
     end
   end
   
-  ## Todo: Instead of setting Sugar's ProductTemplate id to the sku, put the
-  ## sku in a field.
-  def add_product
+  def add_update_products
     @payload['products'].each do |product_hash|
       product = Product.new(product_hash) 
+      
       begin
-        ## Create matching ProductTemplate in SugarCRM
-        @client.post '/ProductTemplates',
-                     product.sugar_product_template
-    
-        "Product #{product.id} was added."
+        ## If we find this product, update it
+        @client.get '/ProductTemplates/' + product.id
+        update_product product 
       rescue => e
-        message = "Unable to add product #{product.id}: \n" + e.message
-        raise SugarcrmAddUpdateObjectError, message, caller
+        ## If we don't find this product, add it
+        add_product product
       end
     end
   end
   
-  def update_product
-    product = Product.new(@payload['product'])
+  ## Todo: Instead of setting Sugar's ProductTemplate id to the sku, put the
+  ## sku in a field.
+  def add_product product
+    begin
+      ## Create matching ProductTemplate in SugarCRM
+      @client.post '/ProductTemplates',
+                   product.sugar_product_template
+  
+      "Product #{product.id} was added."
+    rescue => e
+      message = "Unable to add product #{product.id}: \n" + e.message
+      raise SugarcrmAddUpdateObjectError, message, caller
+    end
+  end
+  
+  def update_product product
     begin
       @client.put '/ProductTemplates/' + product.id,
                   product.sugar_product_template
