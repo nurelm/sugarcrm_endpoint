@@ -1,4 +1,4 @@
-ruby '2.1.0'
+ruby '2.1.2'
 source 'https://rubygems.org'
 
 gem 'sinatra'
@@ -6,7 +6,7 @@ gem 'tilt', '~> 1.4.1'
 gem 'tilt-jbuilder'
 gem 'jbuilder', '2.0.7'
 gem 'capistrano'
-gem 'oauth2', git: 'git://github.com/nurelm/oauth2.git'
+gem 'rest-client'
 gem 'require_all'
 
 group :development do
