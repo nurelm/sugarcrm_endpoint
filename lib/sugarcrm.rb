@@ -58,7 +58,8 @@ class Sugarcrm
       
       ## Associate with corresponding Sugar Account
       @client.post "/Opportunities/" + sugar_opp_id +
-                   "/link/accounts/" + sugar_account_id
+                   "/link/accounts/" + sugar_account_id,
+                   {}
       
       ## Create one RevenueLineItem in SugarCRM for each Order line item
       ## and link to corresponding ProductTemplate and Opportunity.
