@@ -6,6 +6,13 @@ require_all 'lib'
 class SugarcrmIntegration < EndpointBase::Sinatra::Base
   set :logging, true
 
+  configure :development do
+    enable :logging, :dump_errors, :raise_errors
+    log = File.new("tmp/sinatra.log", "a")
+    STDOUT.reopen(log)
+    STDERR.reopen(log)
+  end
+
   post '/add_customer' do
     sugar_action('add_update_customer')
   end
@@ -14,7 +21,7 @@ class SugarcrmIntegration < EndpointBase::Sinatra::Base
     sugar_action('add_update_customer')
   end
 
-  post '/get_customer' do
+  get '/get_customer' do
     "Coming soon ..."
   end
 
@@ -31,11 +38,11 @@ class SugarcrmIntegration < EndpointBase::Sinatra::Base
   end
 
   post '/add_product' do
-    sugar_action('add_product')
+    sugar_action('add_update_products')
   end
 
   post '/update_product' do
-    sugar_action('update_product')
+    sugar_action('add_update_products')
   end
 
   get '/get_product' do

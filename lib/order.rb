@@ -6,7 +6,7 @@ class Order
     @spree_order = spree_order
   end
 
-  def spree_id
+  def wombat_id
     @spree_order['id']
   end
 
@@ -16,11 +16,11 @@ class Order
 
   def sugar_opportunity
     opportunity = Hash.new
-    opportunity['id'] = 'wombat-' + spree_id
+    opportunity['id'] = wombat_id
     opportunity['sales_stage'] = 'Closed Won'
     opportunity['name'] = "Wombat ID #{@spree_order['id']}"
     opportunity['description'] = @spree_order.to_s
-    opportunity['lead_source'] = 'ecomm'
+    opportunity['lead_source'] = 'Web Site'
     opportunity['date_closed'] = DateTime.parse(@spree_order['placed_on']).to_date.to_s
     opportunity['amount'] = @spree_order['totals']['order']
     return opportunity
