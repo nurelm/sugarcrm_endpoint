@@ -6,13 +6,6 @@ require_all 'lib'
 class SugarcrmIntegration < EndpointBase::Sinatra::Base
   set :logging, true
 
-  configure :development do
-    enable :logging, :dump_errors, :raise_errors
-    log = File.new("tmp/sinatra.log", "a")
-    STDOUT.reopen(log)
-    STDERR.reopen(log)
-  end
-
   post '/add_customer' do
     sugar_action('add_update_customer')
   end
