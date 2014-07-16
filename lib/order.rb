@@ -10,6 +10,21 @@ class Order
     @spree_order['id']
   end
 
+  def description
+    @spree_order.to_s
+    desc = "Number: #{wombat_id}\n"
+    desc += "Status: #{@spree_order['status']}\n"
+    desc += "Items: \n"
+    @spree_order['line_items'].each do |item|
+      desc += "- #{item['product_id']}, #{item['name']}, #{item['quantity']} unit(s)\n"
+    end
+    ['item', 'adjustment', 'tax', 'shipping', 'payment', 'order'].each do |adjustment|
+      desc += "#{adjustment.capitalize} Total: #{@spree_order['totals'][adjustment]}\n"
+    end
+
+    desc
+  end
+
   def email
     @spree_order['email']
   end
@@ -19,7 +34,7 @@ class Order
     opportunity['id'] = wombat_id
     opportunity['sales_stage'] = 'Closed Won'
     opportunity['name'] = "Wombat ID #{@spree_order['id']}"
-    opportunity['description'] = @spree_order.to_s
+    opportunity['description'] = description
     opportunity['lead_source'] = 'Web Site'
     opportunity['date_closed'] = DateTime.parse(@spree_order['placed_on']).to_date.to_s
     opportunity['amount'] = @spree_order['totals']['order']
