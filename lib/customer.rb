@@ -1,10 +1,10 @@
 class Customer
-  
+
   attr_accessor :sugar_contact_id
 
   def initialize(spree_customer = {})
     @spree_customer = spree_customer
-    
+
     if @spree_customer['first_name'].nil? || @spree_customer['first_name'].empty?
       @spree_customer['first_name'] = @spree_customer['billing_address']['firstname']
     end
@@ -12,15 +12,15 @@ class Customer
       @spree_customer['last_name'] = @spree_customer['billing_address']['lastname']
     end
   end
-  
-  def spree_id
+
+  def wombat_id
     @spree_customer['id']
   end
 
   def email
     @spree_customer['email']
   end
-  
+
   def sugar_account
     account = Hash.new
     account['name'] = "#{@spree_customer['firstname']} #{@spree_customer['lastname']}"
@@ -43,10 +43,10 @@ class Customer
     account['billing_address_country'] = @spree_customer['billing_address']['country']
     account['phone_office'] = @spree_customer['billing_address']['phone']
     account['phone_alternate'] = @spree_customer['shipping_address']['phone']
-    account['lead_source'] = 'Ecommerce'
+    account['lead_source'] = 'Web Site'
     return account
   end
-  
+
   def sugar_contact
     contact = Hash.new
     contact['first_name'] = @spree_customer['firstname']
@@ -71,7 +71,7 @@ class Customer
     contact['phone_home'] = @spree_customer['billing_address']['phone']
     contact['phone_work'] = @spree_customer['billing_address']['phone']
     contact['phone_other'] = @spree_customer['shipping_address']['phone']
-    contact['lead_source'] = 'Ecommerce'
+    contact['lead_source'] = 'Web Site'
     return contact
   end
 

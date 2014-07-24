@@ -1,4 +1,4 @@
-worker_processes 3
+worker_processes ENV['WORKER_PROCESSES'].to_i || 3
 timeout 180
 
 preload_app true

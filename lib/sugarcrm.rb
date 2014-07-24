@@ -27,7 +27,7 @@ class Sugarcrm
 
   def server_mode
     # Augury.test? ? 'Test' : 'Production'
-    (ENV['SUGARCRM_ENDPOINT_SERVER_MODE'] || 'Test').capitalize
+    (ENV['SUGARCRM_INTEGRATION_SERVER_MODE'] || 'Test').capitalize
   end
 
   def add_update_customer
@@ -36,16 +36,16 @@ class Sugarcrm
       sugar_contact_id = get_sugar_contact_id(customer)
       customer.sugar_contact_id = sugar_contact_id
       sugar_account_id = get_sugar_account_id(customer)
-      "Customer with Hub ID #{customer.spree_id} was added / updated."
+      "Customer with Wombat ID #{customer.wombat_id} was added / updated."
     rescue => e
-      message = "Unable to add / update customer with Hub ID #{customer.spree_id}: \n" + e.message
+      message = "Unable to add / update customer with Wombat ID #{customer.wombat_id}: \n" + e.message
       raise SugarcrmAddUpdateObjectError, message, caller
     end
   end
-  
+
   def add_order
-    order = Order.new(@payload['order']) 
-    customer = Customer.new(@payload['order']) 
+    order = Order.new(@payload['order'])
+    customer = Customer.new(@payload['order'])
     begin
       sugar_contact_id = get_sugar_contact_id(customer)
       customer.sugar_contact_id = sugar_contact_id
@@ -55,12 +55,12 @@ class Sugarcrm
       oauth_response = @client.post '/Opportunities',
                                     order.sugar_opportunity
       sugar_opp_id = oauth_response['id']
-      
+
       ## Associate with corresponding Sugar Account
       @client.post "/Opportunities/" + sugar_opp_id +
                    "/link/accounts/" + sugar_account_id,
                    {}
-      
+
       ## Create one RevenueLineItem in SugarCRM for each Order line item
       ## and link to corresponding ProductTemplate and Opportunity.
       order.sugar_revenue_line_items.each do |rli|
@@ -68,64 +68,60 @@ class Sugarcrm
                                       "/link/revenuelineitems",
                                       rli
 
-        ## Todo: Create product for each RLI if one does not exist 
+        ## Todo: Create product for each RLI if one does not exist
       end
-  
-      "Order with Hub ID #{order.spree_id} was added."
+
+      "Order with Wombat ID #{order.wombat_id} was added."
     rescue => e
-      message = "Unable to add order #{order.spree_id}: \n" + e.message
+      message = "Unable to add order #{order.wombat_id}: \n" + e.message
       raise SugarcrmAddUpdateObjectError, message, caller
     end
   end
-  
+
   def update_order
     order = Order.new(@payload['order'])
     begin
-      @client.put '/Opportunities/' + order.id,
+      @client.put '/Opportunities/' + order.wombat_id,
                   order.sugar_opportunity
 
       ## Todo:
       ## Delete Opportunity's RLIs here and recreate
 
-      "Order #{order.id} was updated."
+      "Order #{order.wombat_id} was updated."
     rescue => e
-      message = "Unable to update order #{order.id}: \n" + e.message
+      message = "Unable to update order #{order.wombat_id}: \n" + e.message
       raise SugarcrmAddUpdateObjectError, message, caller
     end
   end
-  
-  def add_order_shipment_notes
-    @payload['shipments'].each do |shipment_hash|
-      shipment = Shipment.new(shipment_hash)
-      begin
-        @client.post "/Opportunities/" + shipment.order_id +
-                      "/link/notes/",
-                      shipment.sugar_note
 
-        "Notes for shipment with Hub ID #{shipment.spree_id} were added."
-      rescue => e
-        message = "Unable to add notes for shipment with Hub ID #{shipment.spree_id}: \n" +
-                  e.message
-        raise SugarcrmAddUpdateObjectError, message, caller
+  def add_order_shipment_notes
+    if @payload.has_key?('shipments')
+      @payload['shipments'].each do |shipment_hash|
+        determine_add_update_shipment Shipment.new(shipment_hash)
       end
+    elsif @payload.has_key?('shipment')
+      determine_add_update_shipment Shipment.new(@payload['shipment'])
+    else
+      message = "Invalid payload for shipment."
+      raise SugarcrmAddUpdateObjectError, message
     end
   end
-  
+
   def add_update_products
-    @payload['products'].each do |product_hash|
-      product = Product.new(product_hash) 
-      
-      begin
-        ## If we find this product, update it
-        @client.get '/ProductTemplates/' + product.id
-        update_product product 
-      rescue => e
-        ## If we don't find this product, add it
-        add_product product
+    if @payload.has_key?('products')
+      @payload['products'].each do |product_hash|
+        determine_add_update_product Product.new(product_hash)
       end
+    elsif @payload.has_key?('product')
+      determine_add_update_product Product.new(@payload['product'])
+    else
+      message = "Invalid payload for product: #{product.id}"
+      raise SugarcrmAddUpdateObjectError, message
     end
   end
-  
+
+  private
+
   ## Todo: Instead of setting Sugar's ProductTemplate id to the sku, put the
   ## sku in a field.
   def add_product product
@@ -133,30 +129,82 @@ class Sugarcrm
       ## Create matching ProductTemplate in SugarCRM
       @client.post '/ProductTemplates',
                    product.sugar_product_template
-  
+
       "Product #{product.id} was added."
     rescue => e
       message = "Unable to add product #{product.id}: \n" + e.message
       raise SugarcrmAddUpdateObjectError, message, caller
     end
   end
-  
+
   def update_product product
     begin
       @client.put '/ProductTemplates/' + product.id,
                   product.sugar_product_template
-  
+
       "Product #{product.id} was updated."
     rescue => e
       message = "Unable to update product #{product.id}: \n" + e.message
       raise SugarcrmAddUpdateObjectError, message, caller
     end
   end
-  
+
+  def determine_add_update_product(product)
+    begin
+      ## If we find this product, update it
+      @client.get '/ProductTemplates/' + product.id
+      update_product product
+    rescue => e
+      ## If we don't find this product, add it
+      add_product product
+    end
+  end
   ######################
-  
-  private
-  
+
+  def add_shipment shipment
+    begin
+      @client.post "/Opportunities/" + shipment.order_id +
+                    "/link/notes/",
+                    shipment.sugar_note
+
+      "Notes for shipment with Wombat ID #{shipment.wombat_id} were added."
+    rescue => e
+      message = "Unable to add notes for shipment with Wombat ID #{shipment.wombat_id}: \n" +
+                e.message
+      raise SugarcrmAddUpdateObjectError, message, caller
+    end
+  end
+
+  def determine_add_update_shipment shipment
+    begin
+      ## If we find this shipment, update it
+      oauth_response =  @client.get "/Opportunities/" + shipment.order_id +
+                                      "/link/notes/" +
+                                      "?filter[0][name]=" +
+                                      URI.encode("Shipment #{shipment.wombat_id}")
+
+      sugar_id = oauth_response['records'][0]['id']
+      update_shipment shipment, sugar_id
+    rescue => e
+      ## If we don't find this shipment, add it
+      add_shipment shipment
+    end
+  end
+
+  def update_shipment shipment, sugar_id
+    begin
+      @client.put "/Opportunities/" + shipment.order_id +
+                    "/link/notes/#{sugar_id}",
+                    shipment.sugar_note
+
+      "Notes for shipment with Wombat ID #{shipment.wombat_id} were updated."
+    rescue => e
+      message = "Unable to update notes for shipment with Wombat ID #{shipment.wombat_id}: \n" +
+                e.message
+      raise SugarcrmAddUpdateObjectError, message, caller
+    end
+  end
+
   def get_sugar_contact_id(customer)
     oauth_response = @client.get '/Contacts/' +
                                  '?filter[0][email_addresses.email_address_caps]=' +
@@ -172,7 +220,7 @@ class Sugarcrm
       oauth_response = @client.post '/Contacts', customer.sugar_contact
       sugar_id = oauth_response['id']
     end
-    
+
     sugar_id
   end
 
@@ -193,7 +241,7 @@ class Sugarcrm
                    "/link/accounts/" + sugar_id,
                    {}
     end
-    
+
     sugar_id
   end
 

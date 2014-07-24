@@ -5,30 +5,45 @@ class Order
   def initialize(spree_order = {})
     @spree_order = spree_order
   end
-  
-  def spree_id
+
+  def wombat_id
     @spree_order['id']
+  end
+
+  def description
+    @spree_order.to_s
+    desc = "Number: #{wombat_id}\n"
+    desc += "Status: #{@spree_order['status']}\n"
+    desc += "Items: \n"
+    @spree_order['line_items'].each do |item|
+      desc += "- #{item['product_id']}, #{item['name']}, #{item['quantity']} unit(s)\n"
+    end
+    ['item', 'adjustment', 'tax', 'shipping', 'payment', 'order'].each do |adjustment|
+      desc += "#{adjustment.capitalize} Total: #{@spree_order['totals'][adjustment]}\n"
+    end
+
+    desc
   end
 
   def email
     @spree_order['email']
   end
-  
+
   def sugar_opportunity
     opportunity = Hash.new
-    opportunity['id'] = 'hub-' + spree_id
+    opportunity['id'] = wombat_id
     opportunity['sales_stage'] = 'Closed Won'
-    opportunity['name'] = "Spree Hub ID #{@spree_order['id']}"
-    opportunity['description'] = @spree_order.to_s
-    opportunity['lead_source'] = 'ecomm'
+    opportunity['name'] = "Wombat ID #{@spree_order['id']}"
+    opportunity['description'] = description
+    opportunity['lead_source'] = 'Web Site'
     opportunity['date_closed'] = DateTime.parse(@spree_order['placed_on']).to_date.to_s
     opportunity['amount'] = @spree_order['totals']['order']
     return opportunity
   end
-  
+
   def sugar_revenue_line_items
     rlis = Array.new
-    
+
     ## Add one RLI for each line item
     @spree_order['line_items'].each do |line_item|
       rli = Hash.new
@@ -44,7 +59,7 @@ class Order
       rli['date_closed'] = DateTime.parse(@spree_order['placed_on']).to_date.to_s
       rlis.append(rli)
     end
-    
+
     ## And one RLI for each adjustment, tax, shipping
     ['adjustment', 'tax', 'shipping'].each do |adjustment|
       rli = Hash.new
@@ -58,7 +73,7 @@ class Order
       rli['date_closed'] = DateTime.parse(@spree_order['placed_on']).to_date.to_s
       rlis.append(rli)
     end
-    
+
     return rlis
   end
 
